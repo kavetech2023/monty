@@ -1,85 +1,95 @@
 #include "monty.h"
-/**
- * _strcmp - Function that compares two strings.
- * @s1: type str compared
- * @s2: type str compared
- * Return: 0 if s1 and s2 are equals.
- *         another value if they are different
- */
-int _strcmp(char *s1, char *s2)
-{
-	int i;
 
-	for (i = 0; s1[i] == s2[i] && s1[i]; i++)
-		;
-	if (s1[i] > s2[i])
-		return (1);
-	if (s1[i] < s2[i])
-		return (-1);
-	return (0);
+/**
+ * print_char - Prints the Ascii value.
+ * @stack: Pointer to a pointer pointing to top node of the stack.
+ * @line_number: Interger representing the line number of of the opcode.
+ */
+void print_char(stack_t **stack, unsigned int line_number)
+{
+	int ascii;
+
+	if (stack == NULL || *stack == NULL)
+		string_err(11, line_number);
+
+	ascii = (*stack)->n;
+	if (ascii < 0 || ascii > 127)
+		string_err(10, line_number);
+	printf("%c\n", ascii);
 }
 
 /**
- * _sch - search if a char is inside a string
- * @s: string to review
- * @c: char to find
- * Return: 1 if success 0 if not
+ * print_str - Prints a string.
+ * @stack: Pointer to a pointer pointing to top node of the stack.
+ * @ln: Interger representing the line number of of the opcode.
  */
-int _sch(char *s, char c)
+void print_str(stack_t **stack, __attribute__((unused))unsigned int ln)
 {
-	int cont = 0;
+	int ascii;
+	stack_t *tmp;
 
-	while (s[cont] != '\0')
+	if (stack == NULL || *stack == NULL)
 	{
-		if (s[cont] == c)
-		{
+		printf("\n");
+		return;
+	}
+
+	tmp = *stack;
+	while (tmp != NULL)
+	{
+		ascii = tmp->n;
+		if (ascii <= 0 || ascii > 127)
 			break;
-		}
-		cont++;
+		printf("%c", ascii);
+		tmp = tmp->next;
 	}
-	if (s[cont] == c)
-		return (1);
-	else
-		return (0);
+	printf("\n");
 }
 
 /**
- * _strtoky - function that cut a string into tokens depending of the delimit
- * @s: string to cut in parts
- * @d: delimiters
- * Return: first partition
+ * rotl - Rotates the first node of the stack to the bottom.
+ * @stack: Pointer to a pointer pointing to top node of the stack.
+ * @ln: Interger representing the line number of of the opcode.
  */
-char *_strtoky(char *s, char *d)
+void rotl(stack_t **stack, __attribute__((unused))unsigned int ln)
 {
-	static char *ultimo;
-	int i = 0, j = 0;
+	stack_t *tmp;
 
-	if (!s)
-		s = ultimo;
-	while (s[i] != '\0')
-	{
-		if (_sch(d, s[i]) == 0 && s[i + 1] == '\0')
-		{
-			ultimo = s + i + 1;
-			*ultimo = '\0';
-			s = s + j;
-			return (s);
-		}
-		else if (_sch(d, s[i]) == 0 && _sch(d, s[i + 1]) == 0)
-			i++;
-		else if (_sch(d, s[i]) == 0 && _sch(d, s[i + 1]) == 1)
-		{
-			ultimo = s + i + 1;
-			*ultimo = '\0';
-			ultimo++;
-			s = s + j;
-			return (s);
-		}
-		else if (_sch(d, s[i]) == 1)
-		{
-			j++;
-			i++;
-		}
-	}
-	return (NULL);
+	if (stack == NULL || *stack == NULL || (*stack)->next == NULL)
+		return;
+
+	tmp = *stack;
+	while (tmp->next != NULL)
+		tmp = tmp->next;
+
+	tmp->next = *stack;
+	(*stack)->prev = tmp;
+	*stack = (*stack)->next;
+	(*stack)->prev->next = NULL;
+	(*stack)->prev = NULL;
+}
+
+
+/**
+ * rotr - Rotates the last node of the stack to the top.
+ * @stack: Pointer to a pointer pointing to top node of the stack.
+ * @ln: Interger representing the line number of of the opcode.
+ */
+void rotr(stack_t **stack, __attribute__((unused))unsigned int ln)
+{
+	stack_t *tmp;
+
+	if (stack == NULL || *stack == NULL || (*stack)->next == NULL)
+		return;
+
+	tmp = *stack;
+
+	while (tmp->next != NULL)
+		tmp = tmp->next;
+
+	tmp->next = *stack;
+	tmp->prev->next = NULL;
+	tmp->prev = NULL;
+	(*stack)->prev = tmp;
+	(*stack) = tmp;
 }

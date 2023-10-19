@@ -1,103 +1,83 @@
 #include "monty.h"
-
-global_t glov;
-
-/**
- * free_glov - frees the global variables
- *
- * Return: no return
- */
-void free_glov(void)
-{
-	free_dlistint(glov.head);
-	free(glov.buffer);
-	fclose(glov.fd);
-}
+stack_t *head = NULL;
 
 /**
- * start_glov - initializes the global variables
- *
- * @fd: file descriptor
- * Return: no return
+ * main - entry point
+ * @argc: arguments count
+ * @argv: list of arguments
+ * Return: always 0
  */
-void start_glov(FILE *fd)
-{
-	glov.lifo = 1;
-	glov.cont = 1;
-	glov.arg = NULL;
-	glov.head = NULL;
-	glov.fd = fd;
-	glov.buffer = NULL;
-}
 
-/**
- * check_input - checks if the file exists and if the file can
- * be opened
- *
- * @argc: argument count
- * @argv: argument vector
- * Return: file struct
- */
-FILE *check_input(int argc, char *argv[])
-{
-	FILE *fd;
-
-	if (argc == 1 || argc > 2)
-	{
-		dprintf(2, "USAGE: monty file\n");
-		exit(EXIT_FAILURE);
-	}
-
-	fd = fopen(argv[1], "r");
-
-	if (fd == NULL)
-	{
-		dprintf(2, "Error: Can't open file %s\n", argv[1]);
-		exit(EXIT_FAILURE);
-	}
-
-	return (fd);
-}
-
-/**
- * main - Entry point
- *
- * @argc: argument count
- * @argv: argument vector
- * Return: 0 on success
- */
 int main(int argc, char *argv[])
 {
-	void (*f)(stack_t **stack, unsigned int line_number);
-	FILE *fd;
-	size_t size = 256;
-	ssize_t nlines = 0;
-	char *lines[2] = {NULL, NULL};
-
-	fd = check_input(argc, argv);
-	start_glov(fd);
-	nlines = getline(&glov.buffer, &size, fd);
-	while (nlines != -1)
+	if (argc != 2)
 	{
-		lines[0] = _strtoky(glov.buffer, " \t\n");
-		if (lines[0] && lines[0][0] != '#')
-		{
-			f = get_opcodes(lines[0]);
-			if (!f)
-			{
-				dprintf(2, "L%u: ", glov.cont);
-				dprintf(2, "unknown instruction %s\n", lines[0]);
-				free_glov();
-				exit(EXIT_FAILURE);
-			}
-			glov.arg = _strtoky(NULL, " \t\n");
-			f(&glov.head, glov.cont);
-		}
-		nlines = getline(&glov.buffer, &size, fd);
-		glov.cont++;
+		fprintf(stderr, "USAGE: monty file\n");
+		exit(EXIT_FAILURE);
 	}
-
-	free_glov();
-
+	open_file(argv[1]);
+	free_nodes();
 	return (0);
+}
+
+/**
+ * create_node - Creates a node.
+ * @n: Number to go inside the node.
+ * Return: Upon sucess a pointer to the node. Otherwise NULL.
+ */
+stack_t *create_node(int n)
+{
+	stack_t *node;
+
+	node = malloc(sizeof(stack_t));
+	if (node == NULL)
+		err(4);
+	node->next = NULL;
+	node->prev = NULL;
+	node->n = n;
+	return (node);
+}
+
+/**
+ * free_nodes - Frees nodes in the stack.
+ */
+void free_nodes(void)
+{
+	stack_t *tmp;
+
+	if (head == NULL)
+		return;
+
+	while (head != NULL)
+	{
+		tmp = head;
+		head = head->next;
+		free(tmp);
+	}
+}
+
+
+/**
+ * add_to_queue - Adds a node to the queue.
+ * @new_node: Pointer to the new node.
+ * @ln: line number of the opcode.
+ */
+void add_to_queue(stack_t **new_node, __attribute__((unused))unsigned int ln)
+{
+	stack_t *tmp;
+
+	if (new_node == NULL || *new_node == NULL)
+		exit(EXIT_FAILURE);
+	if (head == NULL)
+	{
+		head = *new_node;
+		return;
+	}
+	tmp = head;
+	while (tmp->next != NULL)
+		tmp = tmp->next;
+
+	tmp->next = *new_node;
+	(*new_node)->prev = tmp;
+
 }
